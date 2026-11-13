@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de Saves</title>
+<meta name="description" content="Editor de saves do Finn & Bones (port de fãs): cole o código de save do jogo, edite tudo e gere um código novo.">
+<style>
+@font-face { font-family: "Game"; src: url("game.ttf"); }
+:root {
+  --bg: #120d08; --wood: #24190f; --wood2: #2f2215; --line: #6b5532; --gold: #ffd666; --cream: #dbd9a6;
+  --ink: #e9e4c8; --muted: #a79c78; --teal: #2fb6c4; --teal2: #1d8794; --red: #eb5a50; --green: #78e678;
+  --shadow: 0 2px 0 #000a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; }
+body { background: radial-gradient(ellipse at top, #2a1d10 0%, var(--bg) 60%) fixed; min-height: 100vh; }
+a { color: var(--gold); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 18px 16px 120px; }
+header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+h1 { font-family: Game, system-ui; font-weight: normal; color: var(--cream); font-size: 34px; margin: 0; text-shadow: 0 3px 0 #000; letter-spacing: .5px; }
+.ver { color: var(--muted); font-size: 13px; }
+.panel { background: linear-gradient(#2b1f13, var(--wood)); border: 2px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: inset 0 1px 0 #ffffff14, 0 6px 18px #0008; margin-bottom: 14px; }
+.panel h2 { font-family: Game, system-ui; font-weight: normal; color: var(--cream); margin: 0 0 10px; font-size: 22px; text-shadow: var(--shadow); }
+p.hint { color: var(--muted); margin: 4px 0 10px; font-size: 13.5px; }
+textarea, input, select { background: #0e0a06; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: inherit; }
+textarea { width: 100%; min-height: 84px; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+input[type=number] { width: 120px; }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--teal); vertical-align: middle; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+button { font-family: Game, system-ui; font-size: 15px; letter-spacing: .3px; color: #fff; background: linear-gradient(#3fd0dc, var(--teal2)); border: 2px solid #b59b5e; border-radius: 10px; padding: 7px 16px; cursor: pointer; text-shadow: 0 1px 0 #0a3c46; box-shadow: inset 0 1px 0 #ffffff55, 0 2px 0 #000a; position: relative; overflow: hidden; }
+button:hover { filter: brightness(1.1); }
+button:active { transform: translateY(1px); }
+button.ghost { background: #3a2a18; border-color: var(--line); text-shadow: none; }
+button.red { background: linear-gradient(#f07068, #a83a33); }
+button::after { content: ""; position: absolute; top: -20%; left: -60%; width: 30%; height: 140%; background: linear-gradient(90deg, transparent, #ffffff70, transparent); transform: skewX(-25deg); transition: left .45s; }
+button:hover::after { left: 130%; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px 16px; }
+label.f { display: flex; flex-direction: column; gap: 4px; color: var(--cream); font-size: 13px; }
+label.c { display: flex; align-items: center; gap: 8px; color: var(--cream); font-size: 14px; cursor: pointer; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+.tabs button { background: #3a2a18; border-color: var(--line); text-shadow: none; font-size: 14px; padding: 6px 12px; }
+.tabs button.on { background: linear-gradient(#3fd0dc, var(--teal2)); border-color: #b59b5e; }
+.hidden { display: none !important; }
+.msg { min-height: 20px; font-size: 14px; margin-top: 8px; }
+.msg.ok { color: var(--green); } .msg.bad { color: var(--red); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-bottom: 1px solid #ffffff12; padding: 5px 6px; text-align: left; }
+th { color: var(--gold); font-weight: 600; position: sticky; top: 0; background: var(--wood); }
+.tablewrap { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.slot { background: #150f09; border: 2px solid #4b3b22; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.slot.W { border-color: #b8813c; } .slot.S { border-color: #4a7fc1; } .slot.E { border-color: #8f62c9; } .slot.C { border-color: #4caf6b; }
+.slot .top { display: flex; gap: 8px; align-items: center; min-height: 52px; }
+.slot img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 2px 2px #000); }
+.slot .nm { font-size: 13px; color: var(--cream); line-height: 1.2; }
+.slot .tag { font-size: 11px; color: var(--muted); }
+.slot select { width: 100%; font-size: 12.5px; padding: 5px; }
+.slot .mods { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.slot .mods select, .slot .mods input { width: 100%; font-size: 12px; padding: 4px; }
+.slot .flags { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.slot .custom { position: absolute; top: 6px; right: 8px; color: var(--gold); font-size: 13px; }
+h3 { color: var(--gold); font-size: 15px; margin: 14px 0 8px; font-weight: 600; }
+.chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px 14px; }
+.chips label { font-size: 13.5px; }
+.chips img { width: 26px; height: 26px; object-fit: contain; vertical-align: middle; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: linear-gradient(#2b1f13f2, #150f09f7); border-top: 2px solid var(--line); padding: 10px 16px; backdrop-filter: blur(4px); }
+.bar .in { max-width: 1100px; margin: 0 auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.bar textarea { flex: 1 1 300px; min-height: 40px; height: 40px; }
+.badge { display: inline-block; background: #0e0a06; border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; font-size: 13px; color: var(--gold); }
+.drop { border: 2px dashed var(--line); border-radius: 12px; padding: 10px; text-align: center; color: var(--muted); font-size: 13px; }
+.drop.over { border-color: var(--teal); color: var(--ink); }
+@media (max-width: 640px) { h1 { font-size: 26px; } .bar textarea { display: none; } input[type=number] { width: 100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>EDITOR DE SAVES</h1>
+    <span class="ver" id="ver"></span>
+  </header>
+
+  <section class="panel" id="loadPanel">
+    <h2>1. Carregar</h2>
+    <p class="hint">No jogo, abra <b>JOGAR</b> (a lista de jogos salvos), escolha um jogo e toque em <b>COPIAR CÓDIGO</b>. Cole o código aqui. Também dá para abrir o arquivo <code>slot_N.json</code> da pasta <code>saves</code>.</p>
+    <textarea id="codeIn" placeholder="FNB1-..."></textarea>
+    <div class="row" style="margin-top:10px">
+      <button id="btnLoad">CARREGAR CODIGO</button>
+      <button class="ghost" id="btnFile">ABRIR ARQUIVO</button>
+      <button class="ghost" id="btnNew">COMECAR DO ZERO</button>
+      <input type="file" id="file" accept=".json,.txt,application/json,text/plain" class="hidden">
+      <div class="drop" id="drop" style="flex:1 1 200px">ou arraste o arquivo aqui</div>
+    </div>
+    <div class="msg" id="loadMsg"></div>
+  </section>
+
+  <section class="panel hidden" id="editPanel">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">2. Editar <span class="badge" id="who"></span></h2>
+      <span class="ver" id="summary"></span>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+    <div id="views"></div>
+  </section>
+</div>
+
+<div class="bar hidden" id="bar">
+  <div class="in">
+    <button id="btnCode">GERAR CODIGO</button>
+    <button class="ghost" id="btnCopy">COPIAR</button>
+    <button class="ghost" id="btnDown">BAIXAR JSON</button>
+    <textarea id="codeOut" readonly placeholder="O código novo aparece aqui. No jogo: JOGAR > escolha o espaço > COLAR CÓDIGO."></textarea>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.FNB_DATA;
+const ITEM = Object.fromEntries(D.items.map(i => [i.id, i]));
+const CATS = { W: "Espada", S: "Escudo", E: "Equipamento", C: "Consumível" };
+const MODS = { "": "—", A: "Ataque", D: "Defesa", L: "Sorte", H: "Vida", MH: "Vida máx." };
+const GEAR = { weapon: ["W", "Espada"], shield: ["S", "Escudo"], equip1: ["E", "Equip. 1"], equip2: ["E", "Equip. 2"] };
+const TUTORIAL = ["", "1 - equipar a espada", "2 - atributos", "3 - usar poção", "4 - pegar o loot", "5 - mochila-laboratório", "6 - primeira mistura", "7 - tutorial terminado"];
+const STAT_NAMES = { enemies: "Inimigos derrotados", won: "Masmorras vencidas", lost: "Derrotas", mixes: "Misturas", specials: "Misturas especiais", crits: "Críticos", potions: "Poções usadas", coins_earned: "Moedas ganhas", coins_spent: "Moedas gastas", sold: "Itens vendidos", skips: "Lutas puladas", time: "Tempo jogado (segundos)", bosses: "Chefes derrotados", daily_days: "Dias de recompensa", flawless: "Vitórias com 3 estrelas", hard_won: "Vitórias no difícil", endless_floors: "Andares da infinita", weekly: "Desafios semanais" };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let save = null, slotName = "slot_1", tab = "geral";
+
+$("ver").textContent = "dados do jogo v" + D.version;
+
+// ------------------------------------------------------------ código de save (igual ao savecode.py)
+const PREFIX = "FNB1-";
+function b64url(bytes) {
+  let s = ""; const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function unb64url(text) {
+  text = text.replace(/-/g, "+").replace(/_/g, "/");
+  while (text.length % 4) text += "=";
+  const s = atob(text); const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+async function pipe(bytes, stream) {
+  const res = new Response(new Blob([bytes]).stream().pipeThrough(stream));
+  return new Uint8Array(await res.arrayBuffer());
+}
+async function encode(raw) {
+  const bytes = new TextEncoder().encode(JSON.stringify(raw));
+  return PREFIX + b64url(await pipe(bytes, new CompressionStream("deflate")));
+}
+async function decode(code) {
+  let text = String(code || "").replace(/\s+/g, "");
+  if (text.toUpperCase().startsWith(PREFIX)) text = text.slice(PREFIX.length);
+  if (!text) throw new Error("código vazio");
+  const raw = JSON.parse(new TextDecoder().decode(await pipe(unb64url(text), new DecompressionStream("deflate"))));
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("não é um save");
+  return raw;
+}
+
+// ------------------------------------------------------------ regras do jogo (rules.py / state.py)
+function jsRound(x) { return Math.floor(x + 0.5); }
+function threshold(n) { const v = D.xp_table.slice(); while (v.length < n) { const p = v[v.length - 1]; v.push(jsRound(p + p / 2)); } return v[n - 1]; }
+function levelFor(xp) { let l = 1; while (threshold(l) <= xp && l < 999) l++; return l; }
+function levelStart(l) { return l <= 1 ? 0 : threshold(l - 1); }
+const toOrdinal = date => Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000) + 719163;
+const fromOrdinal = n => new Date((n - 719163) * 86400000);
+const isoDay = n => n > 0 ? fromOrdinal(n).toISOString().slice(0, 10) : "";
+const dayFromIso = s => s ? Math.floor(Date.parse(s + "T00:00:00Z") / 86400000) + 719163 : 0;
+function bagSize() { return D.bag_base + D.bag_row * (save.bag_rows || 0); }
+
+function freshSave() {
+  const init = D.initial;
+  return { xp: init.initialExperience || 0, inventory: (init.inventory || []).map(id => ({ id })), gear: {}, mix: [null, null, null],
+           cleared: [], last: "1", muted: false, name: "Finn" };
+}
+function normalize(s) {
+  const def = { cleared: [], last: "1", muted: false, tutorial: (s.cleared && s.cleared.length) ? 7 : 1, recipes: [], intro_seen: !!(s.cleared && s.cleared.length),
+    outro_seen: false, mix_left: 0, mix_total: 0, losses: 0, name: "Finn", played: 0, coins: 0, bag_rows: 0, skip_charges: 0, speed_owned: false,
+    speed_on: false, shop_seed: Math.floor(Math.random() * 2 ** 30) + 1, shop: {}, shop_seen: -1, stats: {}, achievements: [], stars: {}, daily_last: 0,
+    daily_streak: 0, daily_best: 0, endless_best: 0, weekly: {}, hard_cleared: [], hard_on: false, chests: 0, endless_runs: [], seen: [], xp: 0 };
+  for (const [k, v] of Object.entries(def)) if (s[k] === undefined || s[k] === null) s[k] = v;
+  s.gear = s.gear || {};
+  for (const g of D.gear_slots) if (s.gear[g] === undefined) s.gear[g] = null;
+  s.inventory = Array.isArray(s.inventory) ? s.inventory : [];
+  while (s.inventory.length < D.bag_base + D.bag_row * s.bag_rows) s.inventory.push(null);
+  s.mix = Array.isArray(s.mix) ? s.mix : [null, null, null];
+  while (s.mix.length < 3) s.mix.push(null);
+  for (const k of D.stat_keys) if (typeof s.stats[k] !== "number") s.stats[k] = 0;
+  return s;
+}
+
+// ------------------------------------------------------------ carregar
+function setMsg(el, text, ok) { el.textContent = text; el.className = "msg " + (ok ? "ok" : "bad"); }
+function start(raw, name) {
+  save = normalize(raw); slotName = name || "slot_1";
+  $("editPanel").classList.remove("hidden"); $("bar").classList.remove("hidden");
+  setMsg($("loadMsg"), "Jogo \"" + save.name + "\" carregado. Edite abaixo e gere o código novo.", true);
+  render(); $("editPanel").scrollIntoView({ behavior: "smooth" });
+}
+$("btnLoad").onclick = async () => {
+  try { start(await decode($("codeIn").value)); }
+  catch (e) { setMsg($("loadMsg"), "Esse código não funciona (" + e.message + "). Copie de novo no jogo.", false); }
+};
+$("btnNew").onclick = () => start(freshSave(), "slot_1");
+$("btnFile").onclick = () => $("file").click();
+async function readFile(f) {
+  const text = await f.text();
+  try {
+    const t = text.trim();
+    const raw = t.startsWith("{") ? JSON.parse(t) : await decode(t);
+    start(raw, f.name.replace(/\.(json|txt)$/i, "").replace(/^codigo_/, "slot_"));
+  } catch (e) { setMsg($("loadMsg"), "Não consegui ler esse arquivo (" + e.message + ").", false); }
+}
+$("file").onchange = e => e.target.files[0] && readFile(e.target.files[0]);
+const drop = $("drop");
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); e.dataTransfer.files[0] && readFile(e.dataTransfer.files[0]); };
+
+// ------------------------------------------------------------ exportar
+$("btnCode").onclick = async () => { $("codeOut").value = await encode(save); };
+$("btnCopy").onclick = async () => {
+  if (!$("codeOut").value) $("codeOut").value = await encode(save);
+  try { await navigator.clipboard.writeText($("codeOut").value); flash("Código copiado! No jogo: JOGAR > escolha o espaço > COLAR CÓDIGO."); }
+  catch { $("codeOut").select(); document.execCommand("copy"); flash("Código copiado!"); }
+};
+$("btnDown").onclick = () => {
+  const blob = new Blob([JSON.stringify(save, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = slotName + ".json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+function flash(text) { setMsg($("loadMsg"), text, true); $("summary").textContent = text; }
+function changed() { $("codeOut").value = ""; summary(); }
+function summary() {
+  const lvl = levelFor(save.xp);
+  $("who").textContent = save.name;
+  $("summary").textContent = `Nível ${lvl} · ${save.coins} moedas · ${save.cleared.length} masmorras`;
+}
+
+// ------------------------------------------------------------ desenho
+const TABS = [["geral", "Geral"], ["masmorras", "Masmorras"], ["mochila", "Mochila"], ["loja", "Loja"], ["progresso", "Progresso"],
+              ["conquistas", "Conquistas"], ["galeria", "Galeria e receitas"], ["json", "JSON (tudo)"]];
+function render() {
+  $("tabs").innerHTML = TABS.map(([k, n]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${n}</button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
+  const view = { geral: viewGeneral, masmorras: viewDungeons, mochila: viewBag, loja: viewShop, progresso: viewProgress,
+                 conquistas: viewAch, galeria: viewGallery, json: viewJson }[tab];
+  $("views").innerHTML = ""; $("views").appendChild(view()); summary();
+}
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function field(label, input) { const l = el(`<label class="f">${label}</label>`); l.appendChild(input); return l; }
+function num(obj, key, opts = {}) {
+  const i = el(`<input type="number" step="${opts.step || 1}" ${opts.min !== undefined ? `min="${opts.min}"` : ""} ${opts.max !== undefined ? `max="${opts.max}"` : ""}>`);
+  i.value = obj[key] ?? 0;
+  i.oninput = () => { const v = opts.step && opts.step < 1 ? parseFloat(i.value) : parseInt(i.value, 10); obj[key] = isNaN(v) ? 0 : v; changed(); opts.after && opts.after(); };
+  return i;
+}
+function txt(obj, key, max) { const i = el(`<input type="text" maxlength="${max || 200}">`); i.value = obj[key] ?? ""; i.oninput = () => { obj[key] = i.value; changed(); }; return i; }
+function chk(obj, key, label, after) {
+  const l = el(`<label class="c"><input type="checkbox"> ${label}</label>`); const i = l.querySelector("input");
+  i.checked = !!obj[key]; i.onchange = () => { obj[key] = i.checked; changed(); after && after(); }; return l;
+}
+function inList(list, value, label) {
+  const l = el(`<label class="c"><input type="checkbox"> ${label}</label>`); const i = l.querySelector("input");
+  i.checked = list.includes(value);
+  i.onchange = () => { const at = list.indexOf(value); if (i.checked && at < 0) list.push(value); if (!i.checked && at >= 0) list.splice(at, 1); changed(); };
+  return l;
+}
+
+function viewGeneral() {
+  const box = el(`<div></div>`);
+  const g = el(`<div class="grid"></div>`);
+  g.appendChild(field("Nome do jogo (até 18 letras)", txt(save, "name", 18)));
+  const lvlOut = el(`<span class="badge"></span>`);
+  const showLvl = () => { const l = levelFor(save.xp); lvlOut.textContent = `Nível ${l}`; };
+  g.appendChild(field("XP total", num(save, "xp", { min: 0, after: showLvl })));
+  const lvlIn = el(`<input type="number" min="1" max="200" placeholder="nível">`);
+  lvlIn.onchange = () => { const l = Math.max(1, parseInt(lvlIn.value, 10) || 1); save.xp = levelStart(l); changed(); render(); };
+  const lv = el(`<div class="row"></div>`); lv.append(lvlIn, lvlOut); g.appendChild(field("Ir direto para o nível", lv)); showLvl();
+  g.appendChild(field("Moedas", num(save, "coins", { min: 0 })));
+  const tut = el(`<select>${TUTORIAL.slice(1).map((t, i) => `<option value="${i + 1}">${t}</option>`).join("")}</select>`);
+  tut.value = save.tutorial; tut.onchange = () => { save.tutorial = +tut.value; changed(); };
+  g.appendChild(field("Tutorial (próximo passo)", tut));
+  const last = el(`<select>${D.dungeons.map(d => `<option>${d.id}</option>`).join("")}</select>`);
+  last.value = save.last; last.onchange = () => { save.last = last.value; changed(); };
+  g.appendChild(field("Última masmorra aberta", last));
+  g.appendChild(field("Derrotas seguidas (dica da Princesa com 3)", num(save, "losses", { min: 0 })));
+  const played = el(`<input type="datetime-local">`);
+  if (save.played) { const d = new Date(save.played * 1000); played.value = new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
+  played.onchange = () => { save.played = played.value ? Date.parse(played.value) / 1000 : 0; changed(); };
+  g.appendChild(field("Jogado pela última vez", played));
+  g.appendChild(field("Mistura em andamento: segundos que faltam", num(save, "mix_left", { min: 0, step: 0.1 })));
+  g.appendChild(field("Mistura em andamento: duração total", num(save, "mix_total", { min: 0, step: 0.1 })));
+  box.appendChild(g);
+  const c = el(`<div class="row" style="margin-top:14px;gap:22px"></div>`);
+  c.append(chk(save, "intro_seen", "Já viu a abertura (quadrinhos)"), chk(save, "outro_seen", "Já viu o final"), chk(save, "muted", "Som desligado (saves antigos)"));
+  box.appendChild(c);
+  return box;
+}
+
+function viewDungeons() {
+  const box = el(`<div></div>`);
+  const tools = el(`<div class="row" style="margin-bottom:10px"></div>`);
+  const all = el(`<button>VENCER TODAS</button>`), stars = el(`<button class="ghost">TODAS AS ESTRELAS</button>`);
+  const hard = el(`<button class="ghost">TODAS NO DIFICIL</button>`), none = el(`<button class="red">ZERAR</button>`);
+  all.onclick = () => { save.cleared = D.map_dungeons.slice(); changed(); render(); };
+  stars.onclick = () => { for (const d of save.cleared) save.stars[d] = [true, true, true]; changed(); render(); };
+  hard.onclick = () => { save.hard_cleared = save.cleared.slice(); changed(); render(); };
+  none.onclick = () => { if (confirm("Tirar todas as masmorras vencidas, estrelas e modo difícil?")) { save.cleared = []; save.stars = {}; save.hard_cleared = []; changed(); render(); } };
+  tools.append(all, stars, hard, none, chk(save, "hard_on", "Mapa no modo difícil"));
+  box.appendChild(tools);
+  box.appendChild(el(`<p class="hint">O modo difícil abre depois da masmorra ${D.hard_unlock}. As masmorras 31 e 32 eram de eventos do jogo original.</p>`));
+  const wrap = el(`<div class="tablewrap"><table><thead><tr><th>Masmorra</th><th>Inimigos</th><th>Vencida</th><th>★ 1</th><th>★ 2</th><th>★ 3</th><th>Difícil</th></tr></thead><tbody></tbody></table></div>`);
+  const body = wrap.querySelector("tbody");
+  for (const d of D.dungeons) {
+    const tr = el(`<tr><td>${d.id}</td><td style="color:var(--muted);font-size:12.5px">${d.enemies.map(e => e[0] + " " + e[1]).join(", ")}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
+    const tds = tr.querySelectorAll("td");
+    tds[2].appendChild(inList(save.cleared, d.id, ""));
+    const st = save.stars[d.id] || [false, false, false];
+    for (let i = 0; i < 3; i++) {
+      const cb = el(`<input type="checkbox">`); cb.checked = !!st[i];
+      cb.onchange = () => { const s = save.stars[d.id] || [false, false, false]; s[i] = cb.checked; save.stars[d.id] = s; changed(); };
+      tds[3 + i].appendChild(cb);
+    }
+    tds[6].appendChild(inList(save.hard_cleared, d.id, ""));
+    body.appendChild(tr);
+  }
+  box.appendChild(wrap);
+  return box;
+}
+
+function itemOptions(cat, current) {
+  const groups = {};
+  for (const it of D.items) { if (cat && it.cat !== cat) continue; (groups[it.cat] = groups[it.cat] || []).push(it); }
+  let html = `<option value="">(vazio)</option>`;
+  for (const [c, list] of Object.entries(groups)) {
+    html += `<optgroup label="${CATS[c] || c}">` + list.map(it => `<option value="${it.id}" ${current === it.id ? "selected" : ""}>${esc(it.name)}</option>`).join("") + `</optgroup>`;
+  }
+  return html;
+}
+function slotCard(get, set, cat, label) {
+  const entry = get();
+  const base = entry ? ITEM[entry.id] : null;
+  const cfg = entry ? (entry.custom ? entry.cfg : base && base.cfg) : null;
+  const catNow = cfg ? cfg.Category : (base ? base.cat : "");
+  const card = el(`<div class="slot ${catNow || ""}"></div>`);
+  const icon = base && base.mc ? `<img src="icons/${esc(base.mc)}.png" alt="">` : `<div style="width:48px;height:48px;border-radius:8px;background:#0e0a06"></div>`;
+  const name = entry ? (base ? base.name : entry.id) : "(vazio)";
+  card.appendChild(el(`<div class="top">${icon}<div><div class="nm">${esc(name)}</div><div class="tag">${esc(label)}${entry && entry.custom ? " · misturado" : ""}</div></div></div>`));
+  if (entry && entry.custom) card.appendChild(el(`<span class="custom" title="Item misturado (atributos próprios)">✦</span>`));
+  const pick = el(`<select>${itemOptions(cat, entry ? entry.id : "")}</select>`);
+  pick.onchange = () => { set(pick.value ? { id: pick.value } : null); changed(); render(); };
+  card.appendChild(pick);
+  if (entry && cfg) {
+    const mods = el(`<div class="mods"></div>`);
+    const mod = (which) => {
+      const m = cfg[which] || { Category: null, Value: null };
+      const sel = el(`<select>${Object.entries(MODS).map(([k, n]) => `<option value="${k}" ${(m.Category || "") === k ? "selected" : ""}>${n}</option>`).join("")}</select>`);
+      const val = el(`<input type="number" step="1" placeholder="valor">`); val.value = m.Value ?? "";
+      const apply = () => {
+        const own = entry.custom ? entry.cfg : JSON.parse(JSON.stringify(base.cfg));
+        own[which] = { Category: sel.value || null, Value: sel.value ? (parseFloat(val.value) || 0) : null };
+        const out = { id: entry.id, custom: true, cfg: own }; if (entry.locked) out.locked = true;
+        set(out); changed(); render();
+      };
+      sel.onchange = apply; val.onchange = apply; mods.append(sel, val);
+    };
+    mod("FirstModifier"); mod("SecondModifier");
+    card.appendChild(mods);
+    const flags = el(`<div class="flags"></div>`);
+    const lock = el(`<label class="c" style="font-size:12px"><input type="checkbox"> cadeado</label>`);
+    lock.querySelector("input").checked = !!entry.locked;
+    lock.querySelector("input").onchange = e => { const out = Object.assign({}, entry); if (e.target.checked) out.locked = true; else delete out.locked; set(out); changed(); };
+    flags.appendChild(lock);
+    if (entry.custom) {
+      const reset = el(`<a href="#" style="font-size:12px">voltar ao normal</a>`);
+      reset.onclick = e => { e.preventDefault(); const out = { id: entry.id }; if (entry.locked) out.locked = true; set(out); changed(); render(); };
+      flags.appendChild(reset);
+    }
+    card.appendChild(flags);
+  }
+  return card;
+}
+function viewBag() {
+  const box = el(`<div></div>`);
+  box.appendChild(el(`<p class="hint">Escolha o item de cada espaço. Mudar o ataque, a defesa, a sorte ou a vida transforma o item num item "misturado" (com atributos próprios), como os que saem da mistura no jogo.</p>`));
+  box.appendChild(el(`<h3>Equipado no Finn</h3>`));
+  const gear = el(`<div class="slots"></div>`);
+  for (const g of D.gear_slots) gear.appendChild(slotCard(() => save.gear[g], v => save.gear[g] = v, GEAR[g][0], GEAR[g][1]));
+  box.appendChild(gear);
+  box.appendChild(el(`<h3>Mochila (${bagSize()} espaços: aumente na aba Loja)</h3>`));
+  const bag = el(`<div class="slots"></div>`);
+  save.inventory.forEach((_, i) => bag.appendChild(slotCard(() => save.inventory[i], v => save.inventory[i] = v, null, "Espaço " + (i + 1))));
+  box.appendChild(bag);
+  box.appendChild(el(`<h3>Mistura (esquerda, direita, resultado)</h3>`));
+  const mix = el(`<div class="slots"></div>`);
+  ["Esquerda", "Direita", "Resultado"].forEach((n, i) => mix.appendChild(slotCard(() => save.mix[i], v => save.mix[i] = v, null, n)));
+  box.appendChild(mix);
+  const tools = el(`<div class="row" style="margin-top:12px"></div>`);
+  const clear = el(`<button class="red">ESVAZIAR MOCHILA</button>`);
+  clear.onclick = () => { if (confirm("Tirar todos os itens da mochila?")) { save.inventory = save.inventory.map(() => null); changed(); render(); } };
+  tools.appendChild(clear);
+  box.appendChild(tools);
+  return box;
+}
+function viewShop() {
+  const box = el(`<div></div>`);
+  const g = el(`<div class="grid"></div>`);
+  const rows = num(save, "bag_rows", { min: 0, max: 50, after: () => {
+    const size = bagSize();
+    while (save.inventory.length < size) save.inventory.push(null);
+    if (save.inventory.length > size) {
+      const extra = save.inventory.slice(size).filter(Boolean);
+      save.inventory = save.inventory.slice(0, size);
+      if (extra.length) flash(extra.length + " item(ns) dos espaços tirados foram apagados.");
+    }
+  } });
+  g.appendChild(field(`Fileiras extras da mochila (a loja vende até ${D.max_bag_rows})`, rows));
+  g.appendChild(field("Usos de pular luta", num(save, "skip_charges", { min: 0 })));
+  g.appendChild(field("Semente da loja", num(save, "shop_seed", { min: 1 })));
+  g.appendChild(field("Rodada de estoque já vista", num(save, "shop_seen")));
+  box.appendChild(g);
+  const c = el(`<div class="row" style="margin-top:14px;gap:22px"></div>`);
+  c.append(chk(save, "speed_owned", "Tem o pergaminho de velocidade 2x"), chk(save, "speed_on", "Lutas em 2x ligadas"));
+  box.appendChild(c);
+  box.appendChild(el(`<h3>Estoque da loja (JSON)</h3>`));
+  box.appendChild(jsonBox(() => save.shop, v => save.shop = v));
+  return box;
+}
+function jsonBox(get, set) {
+  const wrap = el(`<div></div>`);
+  const t = el(`<textarea spellcheck="false" style="min-height:110px"></textarea>`); t.value = JSON.stringify(get(), null, 1);
+  const msg = el(`<div class="msg"></div>`);
+  t.oninput = () => { try { set(JSON.parse(t.value)); setMsg(msg, "ok", true); changed(); } catch (e) { setMsg(msg, "JSON inválido: " + e.message, false); } };
+  wrap.append(t, msg); return wrap;
+}
+function viewProgress() {
+  const box = el(`<div></div>`);
+  box.appendChild(el(`<h3>Estatísticas</h3>`));
+  const g = el(`<div class="grid"></div>`);
+  for (const k of D.stat_keys) {
+    const input = num(save.stats, k, { min: 0, step: k === "time" ? 1 : 1 });
+    if (k === "time") {
+      const row = el(`<div class="row"></div>`); const h = el(`<span class="badge"></span>`);
+      const show = () => { const m = Math.floor((save.stats.time || 0) / 60); h.textContent = Math.floor(m / 60) + "h " + String(m % 60).padStart(2, "0") + "min"; };
+      input.addEventListener("input", show); show(); row.append(input, h); g.appendChild(field(STAT_NAMES[k] || k, row));
+    } else g.appendChild(field(STAT_NAMES[k] || k, input));
+  }
+  box.appendChild(g);
+  box.appendChild(el(`<h3>Recompensa diária, infinita e baús</h3>`));
+  const g2 = el(`<div class="grid"></div>`);
+  const day = el(`<input type="date">`); day.value = isoDay(save.daily_last);
+  day.onchange = () => { save.daily_last = dayFromIso(day.value); changed(); };
+  g2.appendChild(field("Última recompensa diária pega", day));
+  g2.appendChild(field("Sequência de dias", num(save, "daily_streak", { min: 0 })));
+  g2.appendChild(field("Maior sequência", num(save, "daily_best", { min: 0 })));
+  g2.appendChild(field("Andar recorde da infinita", num(save, "endless_best", { min: 0 })));
+  g2.appendChild(field(`Baús de estrelas abertos (de ${D.chests.length})`, num(save, "chests", { min: 0, max: D.chests.length })));
+  box.appendChild(g2);
+  box.appendChild(el(`<h3>Melhores descidas da infinita</h3>`));
+  const wrap = el(`<div class="tablewrap"><table><thead><tr><th>Andar</th><th>Dia</th><th>Nível do Finn</th><th></th></tr></thead><tbody></tbody></table></div>`);
+  const body = wrap.querySelector("tbody");
+  save.endless_runs.forEach((r, i) => {
+    const tr = el(`<tr><td></td><td></td><td></td><td></td></tr>`); const td = tr.querySelectorAll("td");
+    td[0].appendChild(num(r, "floor", { min: 1 }));
+    const d = el(`<input type="date">`); d.value = isoDay(r.day); d.onchange = () => { r.day = dayFromIso(d.value); changed(); }; td[1].appendChild(d);
+    td[2].appendChild(num(r, "level", { min: 1 }));
+    const del = el(`<button class="red" style="padding:3px 10px">X</button>`); del.onclick = () => { save.endless_runs.splice(i, 1); changed(); render(); }; td[3].appendChild(del);
+    body.appendChild(tr);
+  });
+  box.appendChild(wrap);
+  const add = el(`<button class="ghost" style="margin-top:8px">ADICIONAR DESCIDA</button>`);
+  add.onclick = () => { save.endless_runs.push({ id: Date.now(), floor: 1, day: toOrdinal(new Date()), level: levelFor(save.xp) }); changed(); render(); };
+  box.appendChild(add);
+  box.appendChild(el(`<h3>Desafios da semana (JSON: semana, desafios sorteados, feitos e a base das contagens)</h3>`));
+  box.appendChild(jsonBox(() => save.weekly, v => save.weekly = v));
+  return box;
+}
+function viewAch() {
+  const box = el(`<div></div>`);
+  const tools = el(`<div class="row" style="margin-bottom:10px"></div>`);
+  const all = el(`<button>MARCAR TODAS</button>`), none = el(`<button class="red">DESMARCAR</button>`);
+  all.onclick = () => { save.achievements = D.achievements.map(a => a.id); changed(); render(); };
+  none.onclick = () => { save.achievements = []; changed(); render(); };
+  tools.append(all, none); box.appendChild(tools);
+  box.appendChild(el(`<p class="hint">Conquistas marcadas aqui não dão as moedas de novo. Desmarcadas, o jogo dá a conquista (e as moedas) assim que a meta for atingida.</p>`));
+  const list = el(`<div class="chips"></div>`);
+  for (const a of D.achievements) {
+    const l = inList(save.achievements, a.id, `<span><b>${esc(a.title)}</b><br><span style="color:var(--muted);font-size:12px">${esc(a.desc)} · +${a.coins} moedas</span></span>`);
+    list.appendChild(l);
+  }
+  box.appendChild(list);
+  return box;
+}
+function viewGallery() {
+  const box = el(`<div></div>`);
+  const tools = el(`<div class="row" style="margin-bottom:10px"></div>`);
+  const all = el(`<button>VER TODOS OS ITENS</button>`), rec = el(`<button class="ghost">TODAS AS RECEITAS</button>`);
+  all.onclick = () => { save.seen = D.items.map(i => i.id); changed(); render(); };
+  rec.onclick = () => { save.recipes = D.recipes.map(r => r.a + "+" + r.b); changed(); render(); };
+  tools.append(all, rec); box.appendChild(tools);
+  box.appendChild(el(`<h3>Galeria: itens já encontrados</h3>`));
+  const list = el(`<div class="chips"></div>`);
+  for (const it of D.items) list.appendChild(inList(save.seen, it.id, `${it.mc ? `<img src="icons/${esc(it.mc)}.png" alt="">` : ""} ${esc(it.name)}`));
+  box.appendChild(list);
+  box.appendChild(el(`<h3>Livro de receitas: misturas especiais descobertas</h3>`));
+  const r = el(`<div class="chips"></div>`);
+  for (const x of D.recipes) {
+    const n = id => (ITEM[id] ? ITEM[id].name : id);
+    r.appendChild(inList(save.recipes, x.a + "+" + x.b, `${esc(n(x.a))} + ${esc(n(x.b))} = <b>${esc(n(x.result))}</b>`));
+  }
+  box.appendChild(r);
+  return box;
+}
+function viewJson() {
+  const box = el(`<div></div>`);
+  box.appendChild(el(`<p class="hint">O save inteiro. Dá para mudar absolutamente tudo aqui; depois toque em APLICAR.</p>`));
+  const t = el(`<textarea spellcheck="false" style="min-height:420px"></textarea>`); t.value = JSON.stringify(save, null, 1);
+  const msg = el(`<div class="msg"></div>`);
+  const apply = el(`<button style="margin-top:8px">APLICAR</button>`);
+  apply.onclick = () => { try { save = normalize(JSON.parse(t.value)); changed(); setMsg(msg, "Aplicado.", true); } catch (e) { setMsg(msg, "JSON inválido: " + e.message, false); } };
+  box.append(t, apply, msg);
+  return box;
+}
+
+// abre direto com ?code=... ou #FNB1-...
+(async () => {
+  const fromHash = decodeURIComponent(location.hash.slice(1));
+  const code = new URLSearchParams(location.search).get("code") || (fromHash.startsWith(PREFIX) ? fromHash : "");
+  if (code) { $("codeIn").value = code; $("btnLoad").click(); }
+})();
+</script>
+</body>
+</html>

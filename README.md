@@ -10,6 +10,13 @@ Abra o [release mais novo](https://github.com/KoZuuYT/finn-and-bones-port/releas
 - **Android:** `FinnAndBones-Mobile-<versao>.apk`. Abra no celular e instale (permita instalar
   apps de fontes desconhecidas).
 
+## Editor de saves
+
+[kozuuyt.github.io/finn-and-bones-port](https://kozuuyt.github.io/finn-and-bones-port/): no jogo, abra
+**JOGAR**, escolha um jogo salvo e toque em **COPIAR CODIGO**. Cole o codigo no editor, mude o que
+quiser (nivel, moedas, itens e atributos, masmorras, estrelas, conquistas, estatisticas... tudo) e
+gere um codigo novo. De volta ao jogo, escolha um espaco e toque em **COLAR CODIGO**.
+
 ## Atualizacoes
 
 Nao precisa voltar aqui: o jogo procura versao nova sozinho ao abrir, mostra o que mudou e
